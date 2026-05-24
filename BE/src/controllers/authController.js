@@ -15,32 +15,66 @@ exports.register = async (req, res) => {
   res.json(user);
 };
 
+
 exports.login = async (req, res) => {
-  const { username, password } = req.body;
 
-  const user = await User.findOne({ where: { username } });
+  try {
 
-  if (!user) {
-    return res.status(404).json({ message: 'User not found' });
-  }
+    const { username, password } = req.body;
 
-  const valid = await bcrypt.compare(password, user.password);
+    const user = await User.findOne({
+      where: { username },
+    });
 
-  if (!valid) {
-    return res.status(400).json({ message: 'Wrong password' });
-  }
+    if (!user) {
 
-  const token = jwt.sign(
-    {
-      id: user.id,
-      username: user.username,
-      role: user.role,
-    },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: '1d',
+      return res.status(404).json({
+        message: "User tidak ditemukan",
+      });
+
     }
-  );
 
-  res.json({ token, user });
+    const validPassword = await bcrypt.compare(
+      password,
+      user.password
+    );
+
+    if (!validPassword) {
+
+      return res.status(400).json({
+        message: "Password salah",
+      });
+
+    }
+
+    const token = jwt.sign(
+      {
+        id: user.id,
+        username: user.username,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1d",
+      }
+    );
+
+    res.json({
+
+      token,
+
+      user: {
+        id: user.id,
+        username: user.username,
+      },
+
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: error.message,
+    });
+
+  }
+
 };

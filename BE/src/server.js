@@ -1,35 +1,161 @@
-require('dotenv').config();
+require("dotenv").config();
 
-const express = require('express');
-const http = require('http');
-const cors = require('cors');
+const express =
+  require("express");
 
-const sequelize = require('./config/database');
-const authRoutes = require('./routes/authRoutes');
-const reportRoutes = require("./routes/reportRoutes");
+const http =
+  require("http");
 
-const dummyPlcSimulator = require('./simulators/dummyPlcSimulator');
+const cors =
+  require("cors");
 
-const socket = require('./sockets/socket');
+// =====================================
+// SOCKET IO
+// =====================================
+
+const {
+  Server,
+} = require("socket.io");
+
+// =====================================
+// EXPRESS
+// =====================================
 
 const app = express();
-const server = http.createServer(app);
 
-socket.init(server);
+// =====================================
+// HTTP SERVER
+// =====================================
+
+const server =
+  http.createServer(app);
+
+// =====================================
+// SOCKET IO INSTANCE
+// =====================================
+
+const io =
+  new Server(server, {
+
+    cors: {
+      origin: "*",
+    },
+
+  });
+
+// =====================================
+// DATABASE
+// =====================================
+
+const sequelize =
+  require("./config/database");
+
+// =====================================
+// ROUTES
+// =====================================
+
+const authRoutes =
+  require("./routes/authRoutes");
+
+const reportRoutes =
+  require("./routes/reportRoutes");
+
+const plcLogRoutes =
+  require("./routes/plcLogRoutes");
+
+// =====================================
+// PLC
+// =====================================
+
+const {
+  connectPLC,
+} = require("./services/s7Service");
+
+// =====================================
+// SOCKET INIT
+// =====================================
+
+const {
+  initSocket,
+} = require("./sockets/socket");
+
+// =====================================
+// INIT SOCKET
+// =====================================
+
+initSocket(io);
+
+// =====================================
+// MIDDLEWARE
+// =====================================
 
 app.use(cors());
+
 app.use(express.json());
 
-app.use('/api/auth', authRoutes);
-app.use("/api/reports", reportRoutes);
+// =====================================
+// API ROUTES
+// =====================================
 
+app.use(
+  "/api/auth",
+  authRoutes
+);
 
-sequelize.sync().then(() => {
-  console.log('Database Connected');
+app.use(
+  "/api/reports",
+  reportRoutes
+);
 
-  dummyPlcSimulator();
+app.use(
+  "/api/plc-logs",
+  plcLogRoutes
+);
 
-  server.listen(process.env.PORT, () => {
-    console.log(`Server Running on ${process.env.PORT}`);
+// =====================================
+// DATABASE SYNC
+// =====================================
+
+sequelize
+
+  .sync({ alter: true })
+
+  .then(() => {
+
+    console.log(
+      "DATABASE CONNECTED"
+    );
+
+    // =====================================
+    // CONNECT PLC
+    // =====================================
+
+    connectPLC();
+
+    // =====================================
+    // START SERVER
+    // =====================================
+
+    server.listen(
+      process.env.PORT,
+      () => {
+
+        console.log(
+
+          `SERVER RUNNING ON ${process.env.PORT}`
+
+        );
+
+      }
+    );
+
+  })
+
+  .catch((err) => {
+
+    console.log(
+      "DATABASE ERROR:",
+      err
+    );
+
   });
-});

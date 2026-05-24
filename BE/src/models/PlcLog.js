@@ -1,13 +1,21 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+module.exports = (sequelize, DataTypes) => {
 
-const PlcLog = sequelize.define('PlcLog', {
-  machineId: DataTypes.INTEGER,
-  temperature: DataTypes.FLOAT,
-  pressure: DataTypes.FLOAT,
-  rpm: DataTypes.FLOAT,
-  output: DataTypes.FLOAT,
-  status: DataTypes.STRING,
-});
+  return sequelize.define(
+    "PlcLog",
+    {
 
-module.exports = PlcLog;
+      username: {
+        type: DataTypes.STRING,
+      },
+
+      message: {
+        type: DataTypes.TEXT,
+      },
+
+    },
+    {
+      tableName: "plclogs",
+    }
+  );
+
+};

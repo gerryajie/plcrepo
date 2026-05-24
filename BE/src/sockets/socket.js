@@ -1,29 +1,106 @@
 let io;
 
-module.exports = {
-  init: (server) => {
-    io = require('socket.io')(server, {
-      cors: {
-        origin: '*',
-      },
-    });
+// =====================================
+// ACTIVE USER
+// =====================================
 
-    io.on('connection', (socket) => {
-      console.log('Client Connected:', socket.id);
+let activeUsername =
+  "system";
 
-      socket.on('disconnect', () => {
-        console.log('Client Disconnect');
-      });
-    });
+// =====================================
+// INIT SOCKET
+// =====================================
 
-    return io;
-  },
+const initSocket = (
+  socketIO
+) => {
 
-  getIO: () => {
-    if (!io) {
-      throw new Error('Socket.io not initialized');
+  io = socketIO;
+
+  io.on(
+    "connection",
+    (socket) => {
+
+      console.log(
+        "CLIENT CONNECTED"
+      );
+
+      // =====================================
+      // USER LOGIN
+      // =====================================
+
+      socket.on(
+        "user:login",
+        (username) => {
+
+          console.log(
+            "ACTIVE USER:",
+            username
+          );
+
+          activeUsername =
+            username;
+
+        }
+      );
+
+      // =====================================
+      // DISCONNECT
+      // =====================================
+
+      socket.on(
+        "disconnect",
+        () => {
+
+          console.log(
+            "CLIENT DISCONNECTED"
+          );
+
+        }
+      );
+
     }
+  );
 
-    return io;
-  },
+};
+
+// =====================================
+// GET IO
+// =====================================
+
+const getIO = () => {
+
+  if (!io) {
+
+    throw new Error(
+      "Socket.io not initialized"
+    );
+
+  }
+
+  return io;
+
+};
+
+// =====================================
+// GET ACTIVE USER
+// =====================================
+
+const getActiveUsername =
+  () => {
+
+    return activeUsername;
+
+  };
+
+// =====================================
+
+module.exports = {
+
+  initSocket,
+
+  getIO,
+
+  getActiveUsername,
+
 };
