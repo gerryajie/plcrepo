@@ -17,21 +17,38 @@ export default function Login() {
     username: "",
     password: "",
   });
+const login = async () => {
 
-  const login = async () => {
-    try {
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        form
-      );
+  try {
 
-      localStorage.setItem("token", res.data.token);
+    const res = await axios.post(
+      "http://localhost:5000/api/auth/login",
+      form
+    );
 
-      navigate("/dashboard");
-    } catch (error) {
-      alert("Login gagal");
-    }
-  };
+    // TOKEN
+
+    localStorage.setItem(
+      "token",
+      res.data.token
+    );
+
+    // USERNAME
+
+    localStorage.setItem(
+      "username",
+      res.data.user.username
+    );
+
+    navigate("/dashboard");
+
+  } catch (error) {
+
+    alert("Login gagal");
+
+  }
+
+};
 
   return (
     <div className="min-h-screen bg-[#060816] flex items-center justify-center overflow-hidden relative">
