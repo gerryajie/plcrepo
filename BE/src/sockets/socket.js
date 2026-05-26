@@ -1,15 +1,12 @@
 let io;
 
-// =====================================
-// ACTIVE USER
-// =====================================
 
 let activeUsername =
   "system";
 
-// =====================================
-// INIT SOCKET
-// =====================================
+let plcStatus =
+  null;
+
 
 const initSocket = (
   socketIO
@@ -25,9 +22,15 @@ const initSocket = (
         "CLIENT CONNECTED"
       );
 
-      // =====================================
-      // USER LOGIN
-      // =====================================
+      if (plcStatus) {
+
+        socket.emit(
+          "plc:status",
+          plcStatus
+        );
+
+      }
+
 
       socket.on(
         "user:login",
@@ -44,9 +47,6 @@ const initSocket = (
         }
       );
 
-      // =====================================
-      // DISCONNECT
-      // =====================================
 
       socket.on(
         "disconnect",
@@ -64,9 +64,6 @@ const initSocket = (
 
 };
 
-// =====================================
-// GET IO
-// =====================================
 
 const getIO = () => {
 
@@ -82,9 +79,6 @@ const getIO = () => {
 
 };
 
-// =====================================
-// GET ACTIVE USER
-// =====================================
 
 const getActiveUsername =
   () => {
@@ -93,7 +87,14 @@ const getActiveUsername =
 
   };
 
-// =====================================
+const setPlcStatus =
+  (status) => {
+
+    plcStatus =
+      status;
+
+  };
+
 
 module.exports = {
 
@@ -102,5 +103,7 @@ module.exports = {
   getIO,
 
   getActiveUsername,
+
+  setPlcStatus,
 
 };

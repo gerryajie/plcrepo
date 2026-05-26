@@ -57,7 +57,6 @@ module.exports = () => {
 
       await PlcLog.create(plcData);
 
-      // ALERT
       if (temperature > 90) {
         const alert = await Alert.create({
           machineId: machine.id,
@@ -69,7 +68,6 @@ module.exports = () => {
         getIO().emit("alert", alert);
       }
 
-      // RANDOM DISCONNECT
       if (Math.random() < 0.03) {
         const disconnectAlert =
           await Alert.create({

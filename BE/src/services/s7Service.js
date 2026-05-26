@@ -7,24 +7,54 @@ const PLCLog = db.PlcLog;
 const client =
   new snap7.S7Client();
 
+const plcConfig = {
+  plcName:
+    process.env.PLC_NAME || "Siemens S7 PLC",
+  plcIp:
+    process.env.PLC_IP || "192.168.1.10",
+  plcRack:
+    Number(process.env.PLC_RACK ?? 0),
+  plcSlot:
+    Number(process.env.PLC_SLOT ?? 1),
+};
+
 const {
   getIO,
   getActiveUsername,
+  setPlcStatus,
 } = require("../sockets/socket");
 
-// =====================================
-// GLOBAL STATE
-// =====================================
 
 let pollingStarted = false;
 
-// STATE TERAKHIR PLC
 
 let previousState = null;
 
-// =====================================
-// CONNECT PLC
-// =====================================
+function emitPlcStatus(status) {
+
+  const payload = {
+    ...plcConfig,
+    status,
+    connected:
+      status === "connected",
+  };
+
+  setPlcStatus(payload);
+
+  try {
+
+    getIO().emit(
+      "plc:status",
+      payload
+    );
+
+  } catch {
+
+
+  }
+
+}
+
 
 function connectPLC() {
 
@@ -32,11 +62,13 @@ function connectPLC() {
     "TRY CONNECT PLC..."
   );
 
+  emitPlcStatus("connecting");
+
   const connected =
     client.ConnectTo(
-      "192.168.1.10",
-      0,
-      1
+      plcConfig.plcIp,
+      plcConfig.plcRack,
+      plcConfig.plcSlot
     );
 
   console.log(
@@ -51,9 +83,6 @@ function connectPLC() {
       client.Connected()
     );
 
-    // =====================================
-    // PLC NOT CONNECTED
-    // =====================================
 
     if (
       !client.Connected()
@@ -62,6 +91,8 @@ function connectPLC() {
       console.log(
         "PLC NOT CONNECTED"
       );
+
+      emitPlcStatus("disconnected");
 
       reconnect();
 
@@ -73,9 +104,8 @@ function connectPLC() {
       "PLC CONNECTED"
     );
 
-    // =====================================
-    // START POLLING
-    // =====================================
+    emitPlcStatus("connected");
+
 
     startPolling();
 
@@ -83,9 +113,6 @@ function connectPLC() {
 
 }
 
-// =====================================
-// RECONNECT
-// =====================================
 
 function reconnect() {
 
@@ -101,15 +128,9 @@ function reconnect() {
 
 }
 
-// =====================================
-// START POLLING
-// =====================================
 
 function startPolling() {
 
-  // =====================================
-  // PREVENT MULTIPLE POLLING
-  // =====================================
 
   if (pollingStarted) {
 
@@ -127,7 +148,6 @@ function startPolling() {
     "START PLC POLLING..."
   );
 
-  // =====================================
 
   setInterval(() => {
 
@@ -140,9 +160,6 @@ function startPolling() {
         res
       ) => {
 
-        // =====================================
-        // ERROR
-        // =====================================
 
         if (err) {
 
@@ -155,18 +172,20 @@ function startPolling() {
 
         }
 
-        // =====================================
-        // BYTE PLC
-        // =====================================
 
         const byte =
           res[0];
 
-        // =====================================
-        // PLC DATA
-        // =====================================
 
         const plcData = {
+
+          ...plcConfig,
+
+          connected:
+            client.Connected(),
+
+          status:
+            "connected",
 
           startEngine:
             (byte & 1) !== 0,
@@ -182,18 +201,12 @@ function startPolling() {
 
         };
 
-        // =====================================
-        // REALTIME SOCKET
-        // =====================================
 
         getIO().emit(
           "plc:data",
           plcData
         );
 
-        // =====================================
-        // FIRST INIT
-        // =====================================
 
         if (
           previousState === null
@@ -211,15 +224,9 @@ function startPolling() {
 
         }
 
-        // =====================================
-        // CHANGES
-        // =====================================
 
         const changes = [];
 
-        // =====================================
-        // START ENGINE
-        // =====================================
 
         if (
 
@@ -244,9 +251,6 @@ function startPolling() {
 
         }
 
-        // =====================================
-        // BATTERY LOW
-        // =====================================
 
         if (
 
@@ -270,9 +274,6 @@ function startPolling() {
 
         }
 
-        // =====================================
-        // SHORT CIRCUIT
-        // =====================================
 
         if (
 
@@ -297,9 +298,6 @@ function startPolling() {
 
         }
 
-        // =====================================
-        // TIME PREVENTIVE
-        // =====================================
 
         if (
 
@@ -324,9 +322,6 @@ function startPolling() {
 
         }
 
-        // =====================================
-        // NO CHANGE
-        // =====================================
 
         if (
           changes.length === 0
@@ -336,9 +331,6 @@ function startPolling() {
 
         }
 
-        // =====================================
-        // SAVE LOGS
-        // =====================================
 
         console.log(
           "PLC CHANGED:",
@@ -353,9 +345,6 @@ function startPolling() {
 
         }
 
-        // =====================================
-        // UPDATE STATE
-        // =====================================
 
         previousState = {
           ...plcData,
@@ -369,7 +358,6 @@ function startPolling() {
 
 }
 
-// =====================================
 
 module.exports = {
 

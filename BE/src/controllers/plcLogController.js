@@ -2,9 +2,6 @@ const db = require("../models");
 
 const PlcLog = db.PlcLog;
 
-// =====================================
-// CREATE LOG
-// =====================================
 
 exports.createLog = async (req, res) => {
 
@@ -32,9 +29,6 @@ exports.createLog = async (req, res) => {
 
 };
 
-// =====================================
-// GET LOGS
-// =====================================
 
 exports.getLogs = async (req, res) => {
 

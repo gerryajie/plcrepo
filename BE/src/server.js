@@ -9,50 +9,56 @@ const http =
 const cors =
   require("cors");
 
-// =====================================
-// SOCKET IO
-// =====================================
 
 const {
   Server,
 } = require("socket.io");
 
-// =====================================
-// EXPRESS
-// =====================================
 
 const app = express();
 
-// =====================================
-// HTTP SERVER
-// =====================================
+const port =
+  process.env.PORT || 5000;
+
+const allowedOrigins =
+  (process.env.CORS_ORIGIN || "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (
+      !origin ||
+      allowedOrigins.includes(origin)
+    ) {
+      callback(null, true);
+      return;
+    }
+
+    callback(
+      new Error("Not allowed by CORS")
+    );
+  },
+  credentials: true,
+};
+
 
 const server =
   http.createServer(app);
 
-// =====================================
-// SOCKET IO INSTANCE
-// =====================================
 
 const io =
   new Server(server, {
 
-    cors: {
-      origin: "*",
-    },
+    cors: corsOptions,
 
   });
 
-// =====================================
-// DATABASE
-// =====================================
 
 const sequelize =
   require("./config/database");
 
-// =====================================
-// ROUTES
-// =====================================
 
 const authRoutes =
   require("./routes/authRoutes");
@@ -63,39 +69,24 @@ const reportRoutes =
 const plcLogRoutes =
   require("./routes/plcLogRoutes");
 
-// =====================================
-// PLC
-// =====================================
 
 const {
   connectPLC,
 } = require("./services/s7Service");
 
-// =====================================
-// SOCKET INIT
-// =====================================
 
 const {
   initSocket,
 } = require("./sockets/socket");
 
-// =====================================
-// INIT SOCKET
-// =====================================
 
 initSocket(io);
 
-// =====================================
-// MIDDLEWARE
-// =====================================
 
-app.use(cors());
+app.use(cors(corsOptions));
 
 app.use(express.json());
 
-// =====================================
-// API ROUTES
-// =====================================
 
 app.use(
   "/api/auth",
@@ -112,13 +103,15 @@ app.use(
   plcLogRoutes
 );
 
-// =====================================
-// DATABASE SYNC
-// =====================================
+
+const syncOptions =
+  process.env.DB_SYNC_ALTER === "true"
+    ? { alter: true }
+    : {};
 
 sequelize
 
-  .sync({ alter: true })
+  .sync(syncOptions)
 
   .then(() => {
 
@@ -126,23 +119,17 @@ sequelize
       "DATABASE CONNECTED"
     );
 
-    // =====================================
-    // CONNECT PLC
-    // =====================================
 
     connectPLC();
 
-    // =====================================
-    // START SERVER
-    // =====================================
 
     server.listen(
-      process.env.PORT,
+      port,
       () => {
 
         console.log(
 
-          `SERVER RUNNING ON ${process.env.PORT}`
+          `SERVER RUNNING ON ${port}`
 
         );
 

@@ -78,3 +78,77 @@ exports.login = async (req, res) => {
   }
 
 };
+
+exports.changePassword = async (req, res) => {
+
+  try {
+
+    const {
+      currentPassword,
+      newPassword,
+    } = req.body;
+
+    if (
+      !currentPassword ||
+      !newPassword
+    ) {
+
+      return res.status(400).json({
+        message: "Password lama dan password baru wajib diisi",
+      });
+
+    }
+
+    if (newPassword.length < 6) {
+
+      return res.status(400).json({
+        message: "Password baru minimal 6 karakter",
+      });
+
+    }
+
+    const user = await User.findByPk(
+      req.user.id
+    );
+
+    if (!user) {
+
+      return res.status(404).json({
+        message: "User tidak ditemukan",
+      });
+
+    }
+
+    const validPassword = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+
+    if (!validPassword) {
+
+      return res.status(400).json({
+        message: "Password lama tidak sesuai",
+      });
+
+    }
+
+    user.password = await bcrypt.hash(
+      newPassword,
+      10
+    );
+
+    await user.save();
+
+    res.json({
+      message: "Password berhasil diubah",
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      message: error.message,
+    });
+
+  }
+
+};

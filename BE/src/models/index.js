@@ -1,14 +1,11 @@
 const { Sequelize, DataTypes } =
   require("sequelize");
 
-// =====================================
-// DATABASE CONNECTION
-// =====================================
 
 const sequelize = new Sequelize(
-  "plc_monitoring", // database
-  "root", // username
-  "", // password
+  "plc_monitoring",
+  "root",
+  "",
   {
     host: "localhost",
     dialect: "mysql",
@@ -16,9 +13,6 @@ const sequelize = new Sequelize(
   }
 );
 
-// =====================================
-// DB OBJECT
-// =====================================
 
 const db = {};
 
@@ -26,15 +20,11 @@ db.Sequelize = Sequelize;
 
 db.sequelize = sequelize;
 
-// =====================================
-// MODELS
-// =====================================
 
 db.PlcLog = require("./PlcLog")(
   sequelize,
   DataTypes
 );
 
-// =====================================
 
 module.exports = db;

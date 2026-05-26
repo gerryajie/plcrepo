@@ -7,11 +7,9 @@ const {
   getLogs,
 } = require("../controllers/plcLogController");
 
-// CREATE LOG
 
 router.post("/", createLog);
 
-// GET LOGS
 
 router.get("/", getLogs);
 
