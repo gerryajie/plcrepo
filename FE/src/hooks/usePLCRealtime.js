@@ -11,5 +11,5 @@ export default function usePLCRealtime(callback) {
       socket.off("plc:data", callback);
     };
 
-  }, []);
+  }, [callback]);
 }

@@ -1,6 +1,4 @@
 export default function ReportFilter({
-  searchUser,
-  setSearchUser,
   dateFilter,
   setDateFilter,
 }) {

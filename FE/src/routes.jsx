@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Report from "./pages/Report";
+import ChangePassword from "./pages/ChangePassword";
 
 export default function AppRoutes() {
 
@@ -22,6 +23,11 @@ export default function AppRoutes() {
       <Route
         path="/report"
         element={<Report />}
+      />
+
+      <Route
+        path="/change-password"
+        element={<ChangePassword />}
       />
 
     </Routes>

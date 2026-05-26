@@ -1,17 +1,16 @@
-// src/pages/Dashboard.jsx
 
 import { useEffect, useState } from "react";
 
 import MainLayout from "../layouts/MainLayout";
 
 import socket from "../socket/socket";
-import axios from "axios";
 
 import {
   Cpu,
   Battery,
   ShieldAlert,
   TimerReset,
+  Wifi,
 } from "lucide-react";
 
 import {
@@ -23,20 +22,20 @@ import "react-circular-progressbar/dist/styles.css";
 
 export default function Dashboard() {
 
-  // =========================================
-  // PLC DATA
-  // =========================================
 
   const [plcData, setPlcData] = useState({
+    plcName: "Waiting PLC",
+    plcIp: "-",
+    plcRack: "-",
+    plcSlot: "-",
+    connected: false,
+    status: "waiting",
     startEngine: false,
     batteryLow: false,
     shortCircuit: false,
     timePreventive: false,
   });
 
-  // =========================================
-  // PREVIOUS DATA
-  // =========================================
 
   const [prevData, setPrevData] = useState({
     startEngine: false,
@@ -45,41 +44,42 @@ export default function Dashboard() {
     timePreventive: false,
   });
 
-  // =========================================
-  // TIMELINE
-  // =========================================
 
   const [timeline, setTimeline] = useState([]);
 
-  // =========================================
-  // CLOCK
-  // =========================================
 
   const [currentTime, setCurrentTime] = useState(
     new Date()
   );
 
-  // =========================================
-  // USER
-  // =========================================
 
   const username =
     localStorage.getItem("username") || "Operator";
 
-  // =========================================
-  // REALTIME CLOCK
-  // =========================================
 
  useEffect(() => {
+
+  const timer =
+    setInterval(
+      () => setCurrentTime(new Date()),
+      1000
+    );
+
+  return () => {
+
+    clearInterval(timer);
+
+  };
+
+}, []);
+
+  useEffect(() => {
 
   const username =
     localStorage.getItem(
       "username"
     );
 
-  // =====================================
-  // SEND USER LOGIN
-  // =====================================
 
   if (username) {
 
@@ -97,21 +97,29 @@ export default function Dashboard() {
 
 }, []);
 
-  // =========================================
-  // SOCKET PLC
-  // =========================================
 
   useEffect(() => {
 
-    socket.on("plc:data", (data) => {
+    const handlePlcStatus =
+      (status) => {
 
-      setPlcData(data);
+        setPlcData((prev) => ({
+          ...prev,
+          ...status,
+        }));
+
+      };
+
+    const handlePlcData =
+      (data) => {
+
+      setPlcData((prev) => ({
+        ...prev,
+        ...data,
+      }));
 
       let eventMessage = "";
 
-      // =====================================
-      // START ENGINE
-      // =====================================
 
       if (
         data.startEngine !== prevData.startEngine
@@ -123,9 +131,6 @@ export default function Dashboard() {
 
       }
 
-      // =====================================
-      // BATTERY
-      // =====================================
 
       if (
         data.batteryLow !== prevData.batteryLow
@@ -137,9 +142,6 @@ export default function Dashboard() {
 
       }
 
-      // =====================================
-      // SHORT CIRCUIT
-      // =====================================
 
       if (
         data.shortCircuit !== prevData.shortCircuit
@@ -151,9 +153,6 @@ export default function Dashboard() {
 
       }
 
-      // =====================================
-      // PREVENTIVE
-      // =====================================
 
       if (
         data.timePreventive !== prevData.timePreventive
@@ -165,17 +164,9 @@ export default function Dashboard() {
 
       }
 
-      // =====================================
-      // PUSH TIMELINE
-      // =====================================
 
       if (eventMessage !== "") {
 
-        const username =
-          localStorage.getItem("username")
-          || "Operator";
-
-        // TIMELINE
 
         setTimeline((prev) => [
 
@@ -188,25 +179,23 @@ export default function Dashboard() {
 
         ]);
 
-        // SAVE DB
 
-        // axios.post(
-        //   "http://localhost:5000/api/plc-logs",
-        //   {
-        //     username,
-        //     message: eventMessage,
-        //   }
-        // );
 
       }
 
       setPrevData(data);
 
-    });
+    };
+
+    socket.on("plc:status", handlePlcStatus);
+
+    socket.on("plc:data", handlePlcData);
 
     return () => {
 
-      socket.off("plc:data");
+      socket.off("plc:status", handlePlcStatus);
+
+      socket.off("plc:data", handlePlcData);
 
     };
 
@@ -216,47 +205,165 @@ export default function Dashboard() {
 
     <MainLayout>
 
-      {/* ========================================= */}
-      {/* HEADER */}
-      {/* ========================================= */}
 
-      <div className="bg-[#081028] border border-[#1e293b] rounded-3xl p-6 mb-8 flex justify-between items-center">
+      <div
+        className="
+          mb-6
+          flex
+          flex-col
+          gap-5
+          rounded-2xl
+          border
+          border-white/10
+          bg-[linear-gradient(135deg,rgba(8,16,40,0.95),rgba(15,30,62,0.9)_55%,rgba(6,78,59,0.25))]
+          p-4
+          shadow-2xl
+          shadow-black/20
+          sm:p-6
+          lg:flex-row
+          lg:items-center
+          lg:justify-between
+        "
+      >
 
-        {/* LEFT */}
 
         <div>
 
-          <h1 className="text-5xl font-bold italic text-white">
+          <h1 className="text-3xl font-bold text-white sm:text-4xl xl:text-5xl">
 
-            Industrial SCADA System
+            PLC Monitoring Command Center
 
           </h1>
 
-          <p className="text-gray-400 mt-2 text-lg">
+          <p className="mt-2 text-base text-gray-400 sm:text-lg">
 
-            Siemens PLC Monitoring
+            Real-time machine status, alarm tracking, and production visibility
 
           </p>
 
         </div>
 
-        {/* RIGHT */}
 
-        <div className="flex items-center gap-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
 
-          {/* USER */}
+          <div
+            className="
+              min-w-0
+              rounded-2xl
+              border
+              border-cyan-300/20
+              bg-[linear-gradient(135deg,rgba(8,145,178,0.16),rgba(34,197,94,0.10)_48%,rgba(15,23,42,0.48))]
+              p-4
+              shadow-xl
+              shadow-cyan-950/20
+              backdrop-blur
+              sm:min-w-[320px]
+            "
+          >
 
-          <div className="bg-[#111c36] border border-[#1e293b] rounded-2xl px-5 py-3 flex items-center gap-4 shadow-lg">
+            <div className="mb-3 flex items-start justify-between gap-3">
 
-            {/* AVATAR */}
+              <div className="flex min-w-0 items-center gap-3">
 
-            <div className="w-14 h-14 rounded-2xl bg-green-500 flex items-center justify-center text-black font-bold text-xl">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-cyan-300/20 bg-cyan-400/10 text-cyan-200">
+                  <Wifi size={20} />
+                </div>
+
+                <div className="min-w-0">
+
+                  <p className="text-xs font-semibold uppercase tracking-wide text-cyan-200">
+                    Connected PLC
+                  </p>
+
+                  <h2 className="truncate text-base font-bold text-white sm:text-lg">
+
+                    {plcData.plcName}
+
+                  </h2>
+
+                </div>
+
+              </div>
+
+              <div
+                className={`
+                  flex
+                  shrink-0
+                  items-center
+                  gap-2
+                  rounded-full
+                  border
+                  px-3
+                  py-1.5
+                  text-xs
+                  font-bold
+                  ${
+                    plcData.connected
+                      ? "border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
+                      : "border-red-300/20 bg-red-400/10 text-red-200"
+                  }
+                `}
+              >
+
+                <span
+                  className={`h-2.5 w-2.5 rounded-full ${
+                    plcData.connected
+                      ? "bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)]"
+                      : "bg-red-400 shadow-[0_0_12px_rgba(248,113,113,0.8)]"
+                  }`}
+                />
+
+                {plcData.connected
+                  ? "ONLINE"
+                  : plcData.status.toUpperCase()}
+
+              </div>
+
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+
+              <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase text-gray-500">
+                  IP
+                </p>
+                <p className="truncate text-sm font-semibold text-gray-100">
+                  {plcData.plcIp}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase text-gray-500">
+                  Rack
+                </p>
+                <p className="text-sm font-semibold text-gray-100">
+                  {plcData.plcRack}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase text-gray-500">
+                  Slot
+                </p>
+                <p className="text-sm font-semibold text-gray-100">
+                  {plcData.plcSlot}
+                </p>
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 shadow-lg sm:px-5">
+
+
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-cyan-400 text-lg font-bold text-slate-950 sm:h-14 sm:w-14 sm:text-xl">
 
               {username.charAt(0).toUpperCase()}
 
             </div>
 
-            {/* USER INFO */}
 
             <div>
 
@@ -280,11 +387,8 @@ export default function Dashboard() {
 
       </div>
 
-      {/* ========================================= */}
-      {/* STATUS CARD */}
-      {/* ========================================= */}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:gap-6">
 
         <StatusCard
           title="START ENGINE"
@@ -316,11 +420,8 @@ export default function Dashboard() {
 
       </div>
 
-      {/* ========================================= */}
-      {/* DONUT */}
-      {/* ========================================= */}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4 xl:gap-6">
 
         <DonutCard
           title="START ENGINE"
@@ -356,17 +457,13 @@ export default function Dashboard() {
 
       </div>
 
-      {/* ========================================= */}
-      {/* ACTIVE ALARM + TIMELINE */}
-      {/* ========================================= */}
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3 xl:gap-6">
 
-        {/* ACTIVE ALARM */}
 
-        <div className="bg-[#081028] border border-[#1e293b] rounded-3xl p-6">
+        <div className="rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(8,16,40,0.95),rgba(18,25,50,0.88))] p-4 shadow-xl shadow-black/15 sm:p-6">
 
-          <h1 className="text-3xl font-bold mb-8">
+          <h1 className="mb-6 text-2xl font-bold sm:text-3xl">
 
             Active Alarm
 
@@ -418,13 +515,12 @@ export default function Dashboard() {
 
         </div>
 
-        {/* TIMELINE */}
 
-        <div className="xl:col-span-2 bg-[#081028] border border-[#1e293b] rounded-3xl p-6">
+        <div className="rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(8,16,40,0.95),rgba(12,26,52,0.88))] p-4 shadow-xl shadow-black/15 sm:p-6 xl:col-span-2">
 
-          <div className="flex justify-between items-center mb-8">
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 
-            <h1 className="text-3xl font-bold">
+            <h1 className="text-2xl font-bold sm:text-3xl">
 
               Realtime Event Timeline
 
@@ -438,7 +534,7 @@ export default function Dashboard() {
 
           </div>
 
-          <div className="space-y-5 max-h-[650px] overflow-auto">
+          <div className="max-h-[650px] space-y-4 overflow-auto">
 
             {timeline.map((item, index) => (
 
@@ -461,9 +557,6 @@ export default function Dashboard() {
   );
 }
 
-// =========================================
-// STATUS CARD
-// =========================================
 
 function StatusCard({
   title,
@@ -474,19 +567,19 @@ function StatusCard({
 
   return (
 
-    <div className="bg-[#081028] border border-[#1e293b] rounded-3xl p-6">
+    <div className="rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(8,16,40,0.94),rgba(13,26,52,0.88))] p-4 shadow-xl shadow-black/15 sm:p-6">
 
       <div className="flex justify-between items-center">
 
         <div>
 
-          <p className="text-gray-400 text-sm">
+          <p className="text-sm text-gray-400">
 
             {title}
 
           </p>
 
-          <h1 className={`text-5xl font-bold mt-4 ${color}`}>
+          <h1 className={`mt-3 text-3xl font-bold sm:text-4xl xl:text-5xl ${color}`}>
 
             {value}
 
@@ -494,7 +587,7 @@ function StatusCard({
 
         </div>
 
-        <div className="bg-[#111c36] p-4 rounded-2xl">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-3 sm:p-4">
 
           {icon}
 
@@ -507,9 +600,6 @@ function StatusCard({
   );
 }
 
-// =========================================
-// DONUT CARD
-// =========================================
 
 function DonutCard({
   title,
@@ -521,11 +611,11 @@ function DonutCard({
 
   return (
 
-    <div className="bg-[#081028] border border-[#1e293b] rounded-3xl p-6">
+    <div className="rounded-2xl border border-white/10 bg-[linear-gradient(135deg,rgba(8,16,40,0.94),rgba(13,26,52,0.88))] p-4 shadow-xl shadow-black/15 sm:p-6">
 
       <div className="flex justify-between items-center mb-5">
 
-        <h1 className="font-bold text-2xl">
+        <h1 className="text-xl font-bold sm:text-2xl">
 
           {title}
 
@@ -538,7 +628,7 @@ function DonutCard({
 
       </div>
 
-      <div className="w-48 h-48 mx-auto">
+      <div className="mx-auto h-36 w-36 sm:h-44 sm:w-44 xl:h-48 xl:w-48">
 
         <CircularProgressbar
           value={value}
@@ -553,7 +643,7 @@ function DonutCard({
       </div>
 
       <p
-        className="text-center mt-5 font-bold text-xl"
+        className="mt-5 text-center text-lg font-bold sm:text-xl"
         style={{ color }}
       >
 
@@ -566,9 +656,6 @@ function DonutCard({
   );
 }
 
-// =========================================
-// ALARM CARD
-// =========================================
 
 function AlarmCard({
   text,
@@ -578,7 +665,7 @@ function AlarmCard({
 
   return (
 
-    <div className={`bg-[#111c36] border ${border} rounded-2xl p-5 flex justify-between items-center`}>
+    <div className={`flex items-center justify-between rounded-2xl border bg-white/[0.05] p-4 sm:p-5 ${border}`}>
 
       <span className="font-bold">
 
@@ -593,9 +680,6 @@ function AlarmCard({
   );
 }
 
-// =========================================
-// TIMELINE CARD
-// =========================================
 
 function TimelineCard({
   item,
@@ -604,11 +688,11 @@ function TimelineCard({
 
   return (
 
-    <div className="bg-[#111c36] rounded-2xl p-5 border-l-4 border-green-400">
+    <div className="rounded-2xl border border-white/10 border-l-green-400 bg-white/[0.05] p-4 sm:p-5">
 
-      <div className="flex justify-between mb-4">
+      <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:justify-between">
 
-        <h1 className="font-bold text-xl">
+        <h1 className="text-lg font-bold sm:text-xl">
 
           PLC EVENT
 
@@ -622,7 +706,7 @@ function TimelineCard({
 
       </div>
 
-      <div className="bg-[#1e293b] rounded-xl px-5 py-4 text-lg">
+      <div className="rounded-xl bg-[#15233f] px-4 py-3 text-base sm:px-5 sm:py-4 sm:text-lg">
 
         {item.message}
 

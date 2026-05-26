@@ -4,6 +4,9 @@ import {
   LogOut,
   FileDown,
 } from "lucide-react";
+import {
+  API_BASE_URL,
+} from "../services/api";
 
 export default function Topbar() {
   const logout = () => {
@@ -14,19 +17,18 @@ export default function Topbar() {
 
   const downloadExcel = () => {
     window.open(
-      "http://localhost:5000/api/reports/excel"
+      `${API_BASE_URL}/api/reports/excel`
     );
   };
 
   const downloadPDF = () => {
     window.open(
-      "http://localhost:5000/api/reports/pdf"
+      `${API_BASE_URL}/api/reports/pdf`
     );
   };
 
   return (
     <div className="h-[80px] bg-[#0b1220] border-b border-cyan-500/10 flex items-center justify-between px-8">
-      {/* LEFT */}
       <div>
         <h1 className="text-3xl font-bold text-white">
           Dashboard Monitoring
@@ -37,9 +39,7 @@ export default function Topbar() {
         </p>
       </div>
 
-      {/* RIGHT */}
       <div className="flex items-center gap-4">
-        {/* EXCEL */}
         <button
           onClick={downloadExcel}
           className="h-[45px] px-5 rounded-2xl bg-green-500/20 border border-green-500/20 text-green-400 flex items-center gap-2 hover:scale-105 transition-all"
@@ -48,7 +48,6 @@ export default function Topbar() {
           Excel
         </button>
 
-        {/* PDF */}
         <button
           onClick={downloadPDF}
           className="h-[45px] px-5 rounded-2xl bg-red-500/20 border border-red-500/20 text-red-400 flex items-center gap-2 hover:scale-105 transition-all"
@@ -57,14 +56,12 @@ export default function Topbar() {
           PDF
         </button>
 
-        {/* ALERT */}
         <div className="relative">
           <Bell className="text-gray-300" />
 
           <div className="w-3 h-3 bg-red-500 rounded-full absolute top-0 right-0" />
         </div>
 
-        {/* USER */}
         <div className="flex items-center gap-2">
           <UserCircle2
             className="text-cyan-400"
@@ -82,7 +79,6 @@ export default function Topbar() {
           </div>
         </div>
 
-        {/* LOGOUT */}
         <button
           onClick={logout}
           className="h-[45px] px-5 rounded-2xl bg-cyan-500 text-white flex items-center gap-2 hover:scale-105 transition-all"

@@ -7,8 +7,6 @@ import MainLayout from "../layouts/MainLayout";
 
 import ReportHeader from "../components/report/ReportHeader";
 
-import ReportFilter from "../components/report/ReportFilter";
-
 import ReportTable from "../components/report/ReportTable";
 
 import ReportPagination from "../components/report/ReportPagination";
@@ -21,9 +19,6 @@ import {
 
 export default function Report() {
 
-  // =====================================
-  // STATE
-  // =====================================
 
   const [logs, setLogs] =
     useState([]);
@@ -44,29 +39,94 @@ export default function Report() {
     setCurrentPage] =
     useState(1);
 
-  const itemsPerPage = 10;
+  const [itemsPerPage,
+    setItemsPerPage] =
+    useState(10);
 
-  // =====================================
-  // FETCH REPORT
-  // =====================================
+  const getDateRange =
+    (selectedDate, selectedPeriod) => {
+
+      if (!selectedDate) {
+
+        return null;
+
+      }
+
+      const start = new Date(
+        `${selectedDate}T00:00:00`
+      );
+
+      const end = new Date(start);
+
+      if (selectedPeriod === "weekly") {
+
+        const day =
+          start.getDay();
+
+        const diffToMonday =
+          day === 0 ? -6 : 1 - day;
+
+        start.setDate(
+          start.getDate() + diffToMonday
+        );
+
+        end.setTime(
+          start.getTime()
+        );
+
+        end.setDate(
+          start.getDate() + 6
+        );
+
+      }
+
+      if (selectedPeriod === "monthly") {
+
+        start.setDate(1);
+
+        end.setMonth(
+          start.getMonth() + 1,
+          0
+        );
+
+      }
+
+      if (selectedPeriod === "yearly") {
+
+        start.setMonth(0, 1);
+
+        end.setMonth(11, 31);
+
+      }
+
+      end.setHours(
+        23,
+        59,
+        59,
+        999
+      );
+
+      return {
+        start,
+        end,
+      };
+
+    };
+
 
   useEffect(() => {
 
-    fetchReports();
+    let isMounted =
+      true;
 
-  }, []);
-
-  const fetchReports =
-    async () => {
+    const fetchReports =
+      async () => {
 
       try {
 
         const data =
           await getReports();
 
-        // =====================================
-        // ARRAY SAFETY
-        // =====================================
 
         const rows =
 
@@ -76,29 +136,42 @@ export default function Report() {
 
             : data.rows || [];
 
-        setLogs(rows);
+        if (isMounted) {
+
+          setLogs(rows);
+
+        }
 
       } catch (error) {
 
         console.log(error);
 
-        setLogs([]);
+        if (isMounted) {
+
+          setLogs([]);
+
+        }
 
       }
 
     };
 
-  // =====================================
-  // FILTER
-  // =====================================
+    fetchReports();
+
+    return () => {
+
+      isMounted =
+        false;
+
+    };
+
+  }, []);
+
 
   const filteredLogs =
     (logs || []).filter(
       (item) => {
 
-        // =====================================
-        // EVENT FILTER
-        // =====================================
 
         let eventMatch =
           true;
@@ -151,17 +224,23 @@ export default function Report() {
 
         }
 
-        // =====================================
-        // DATE FILTER
-        // =====================================
+
+        const range =
+          getDateRange(
+            dateFilter,
+            period
+          );
+
+        const itemDate =
+          item.createdAt
+            ? new Date(item.createdAt)
+            : null;
 
         const dateMatch =
-          dateFilter
+          range && itemDate
 
-            ? item.createdAt
-                ?.startsWith(
-                  dateFilter
-                )
+            ? itemDate >= range.start &&
+              itemDate <= range.end
 
             : true;
 
@@ -173,19 +252,33 @@ export default function Report() {
       }
     );
 
-  // =====================================
-  // PAGINATION
-  // =====================================
 
   const totalPages =
-    Math.ceil(
+    Math.max(
+      Math.ceil(
       (filteredLogs?.length || 0)
       / itemsPerPage
+      ),
+      1
     );
 
   const startIndex =
     (currentPage - 1)
     * itemsPerPage;
+
+  const totalItems =
+    filteredLogs?.length || 0;
+
+  const startItem =
+    totalItems > 0
+      ? startIndex + 1
+      : 0;
+
+  const endItem =
+    Math.min(
+      startIndex + itemsPerPage,
+      totalItems
+    );
 
   const currentData =
     (filteredLogs || []).slice(
@@ -193,9 +286,6 @@ export default function Report() {
       startIndex + itemsPerPage
     );
 
-  // =====================================
-  // UI
-  // =====================================
 
   return (
 
@@ -203,22 +293,29 @@ export default function Report() {
 
       <div
         className="
-        bg-[#081028]
+        bg-[linear-gradient(135deg,rgba(8,16,40,0.96),rgba(12,27,55,0.9)_58%,rgba(6,78,59,0.18))]
         border
-        border-[#1e293b]
-        rounded-3xl
-        p-8
+        border-white/10
+        rounded-2xl
+        p-4
+        shadow-2xl
+        shadow-black/20
+        sm:p-6
+        xl:p-8
       "
       >
 
-        {/* HEADER */}
 
         <div
           className="
             flex
-            items-center
-            justify-between
-            mb-6
+            flex-col
+            gap-4
+            mb-5
+            lg:flex-row
+            lg:items-center
+            lg:justify-between
+            lg:mb-6
           "
         >
 
@@ -230,12 +327,13 @@ export default function Report() {
 
           <div
             className="
-              bg-[#101d44]
+              bg-white/[0.05]
               border
-              border-[#1f2f5c]
+              border-white/10
               rounded-2xl
-              px-5
+              px-4
               py-3
+              sm:px-5
             "
           >
 
@@ -266,38 +364,46 @@ export default function Report() {
 
         </div>
 
-        {/* FILTER */}
 
         <div
           className="
             grid
-            grid-cols-3
-            gap-4
-            mb-6
+            grid-cols-1
+            gap-3
+            mb-5
+            md:grid-cols-3
+            md:gap-4
+            md:mb-6
           "
         >
 
-          {/* EVENT */}
 
           <select
 
             value={eventFilter}
 
             onChange={(e) =>
-              setEventFilter(
-                e.target.value
-              )
+              {
+                setEventFilter(
+                  e.target.value
+                );
+
+                setCurrentPage(1);
+              }
             }
 
             className="
-              bg-[#101d44]
+              bg-[#0d1836]
               border
-              border-[#1f2f5c]
+              border-white/10
               rounded-xl
               px-4
-              py-4
+              py-3
               text-white
               outline-none
+              transition
+              focus:border-emerald-400/60
+              md:py-4
             "
           >
 
@@ -323,7 +429,6 @@ export default function Report() {
 
           </select>
 
-          {/* DATE */}
 
           <input
 
@@ -332,44 +437,57 @@ export default function Report() {
             value={dateFilter}
 
             onChange={(e) =>
-              setDateFilter(
-                e.target.value
-              )
+              {
+                setDateFilter(
+                  e.target.value
+                );
+
+                setCurrentPage(1);
+              }
             }
 
             className="
-              bg-[#101d44]
+              bg-[#0d1836]
               border
-              border-[#1f2f5c]
+              border-white/10
               rounded-xl
               px-4
-              py-4
+              py-3
               text-white
               outline-none
+              transition
+              focus:border-emerald-400/60
+              md:py-4
             "
           />
 
-          {/* PERIOD */}
 
           <select
 
             value={period}
 
             onChange={(e) =>
-              setPeriod(
-                e.target.value
-              )
+              {
+                setPeriod(
+                  e.target.value
+                );
+
+                setCurrentPage(1);
+              }
             }
 
             className="
-              bg-[#101d44]
+              bg-[#0d1836]
               border
-              border-[#1f2f5c]
+              border-white/10
               rounded-xl
               px-4
-              py-4
+              py-3
               text-white
               outline-none
+              transition
+              focus:border-emerald-400/60
+              md:py-4
             "
           >
 
@@ -393,13 +511,13 @@ export default function Report() {
 
         </div>
 
-        {/* EXPORT */}
 
         <ExportButtons
           data={filteredLogs}
+          period={period}
+          dateFilter={dateFilter}
         />
 
-        {/* TABLE */}
 
         <ReportTable
           currentData={
@@ -407,11 +525,10 @@ export default function Report() {
           }
         />
 
-        {/* PAGINATION */}
 
         {
 
-          totalPages > 0 && (
+          totalItems > 0 && (
 
             <ReportPagination
 
@@ -427,13 +544,32 @@ export default function Report() {
                 setCurrentPage
               }
 
+              totalItems={
+                totalItems
+              }
+
+              startItem={
+                startItem
+              }
+
+              endItem={
+                endItem
+              }
+
+              itemsPerPage={
+                itemsPerPage
+              }
+
+              setItemsPerPage={
+                setItemsPerPage
+              }
+
             />
 
           )
 
         }
 
-        {/* EMPTY */}
 
         {
 

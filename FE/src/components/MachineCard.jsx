@@ -6,7 +6,6 @@ export default function MachineCard({
 
   return (
     <div className="bg-[#0b1220] rounded-3xl p-6 border border-cyan-500/10 hover:scale-[1.02] transition-all">
-      {/* HEADER */}
       <div className="flex justify-between items-center mb-5">
         <div>
           <h1 className="text-2xl font-bold text-white">
@@ -29,7 +28,6 @@ export default function MachineCard({
         </div>
       </div>
 
-      {/* BODY */}
       <div className="space-y-4">
         <Item
           label="Temperature"

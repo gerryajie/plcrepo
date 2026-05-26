@@ -1,6 +1,6 @@
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 import {
   Factory,
@@ -8,7 +8,11 @@ import {
   Activity,
   BellRing,
   Cpu,
+  XCircle,
 } from "lucide-react";
+
+const loginHeroImageUrl =
+  import.meta.env.VITE_LOGIN_HERO_IMAGE_URL;
 
 export default function Login() {
   const navigate = useNavigate();
@@ -17,73 +21,121 @@ export default function Login() {
     username: "",
     password: "",
   });
+  const [errorMessage,
+    setErrorMessage] =
+    useState("");
 const login = async () => {
 
   try {
 
-    const res = await axios.post(
-      "http://localhost:5000/api/auth/login",
+    setErrorMessage("");
+
+    const res = await api.post(
+      "/auth/login",
       form
     );
 
-    // TOKEN
 
     localStorage.setItem(
       "token",
       res.data.token
     );
 
-    // USERNAME
 
     localStorage.setItem(
       "username",
       res.data.user.username
     );
 
+    localStorage.setItem(
+      "user",
+      JSON.stringify(res.data.user)
+    );
+
     navigate("/dashboard");
 
   } catch (error) {
 
-    alert("Login gagal");
+    setErrorMessage(
+      error.response?.data?.message ||
+      "Login gagal. Periksa username dan password."
+    );
 
   }
 
 };
 
   return (
-    <div className="min-h-screen bg-[#060816] flex items-center justify-center overflow-hidden relative">
-      <div className="absolute w-[500px] h-[500px] bg-cyan-500/20 blur-[120px] rounded-full top-[-100px] left-[-100px]" />
+    <div
+      className="
+        flex
+        min-h-screen
+        items-center
+        justify-center
+        overflow-hidden
+        bg-[linear-gradient(135deg,#050816_0%,#071426_45%,#082f36_100%)]
+        p-4
+        sm:p-6
+      "
+    >
 
-      <div className="absolute w-[400px] h-[400px] bg-blue-500/20 blur-[120px] rounded-full bottom-[-100px] right-[-100px]" />
-
-      <div className="w-[1400px] h-[800px] rounded-[30px] overflow-hidden border border-cyan-500/20 bg-[#0b1220]/90 backdrop-blur-xl shadow-2xl flex z-10">
-        {/* LEFT */}
-        <div className="w-1/2 relative bg-gradient-to-br from-cyan-900/40 to-blue-950 p-12 flex flex-col justify-between">
+      <div
+        className="
+          z-10
+          flex
+          min-h-[min(760px,calc(100vh-2rem))]
+          w-full
+          max-w-7xl
+          overflow-hidden
+          rounded-3xl
+          border
+          border-white/10
+          bg-[#0b1220]/90
+          shadow-2xl
+          shadow-black/35
+          backdrop-blur-xl
+          lg:grid
+          lg:grid-cols-[1.05fr_0.95fr]
+        "
+      >
+        <div
+          className="
+            relative
+            hidden
+            flex-col
+            justify-between
+            overflow-hidden
+            bg-[linear-gradient(145deg,rgba(8,145,178,0.24),rgba(6,78,59,0.34)_50%,rgba(8,16,40,0.92))]
+            p-8
+            lg:flex
+            xl:p-12
+          "
+        >
           <div
             className="absolute inset-0 opacity-30 bg-cover bg-center"
             style={{
               backgroundImage:
-                "url('https://images.unsplash.com/photo-1565043589221-1a6fd9ae45c7?q=80&w=2070&auto=format&fit=crop')",
+                `url('${loginHeroImageUrl}')`,
             }}
           />
 
           <div className="relative z-10">
             <div className="flex items-center gap-4 mb-5">
-              <Factory className="text-cyan-400" size={50} />
+              <Factory className="text-cyan-300" size={50} />
 
-              <h1 className="text-5xl font-bold text-white">
+              <h1 className="text-4xl font-bold text-white xl:text-5xl">
                 PLC MONITORING
               </h1>
             </div>
 
-            <p className="text-gray-300 text-xl max-w-[500px]">
+            <p className="max-w-[520px] text-lg text-gray-300 xl:text-xl">
               Realtime industrial monitoring dashboard untuk monitoring mesin,
               PLC, alert, dan analytics.
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 relative z-10">
-            <div className="bg-white/5 border border-cyan-500/10 rounded-2xl p-5">
+          <div className="relative z-10 grid grid-cols-3 gap-4">
+            <div className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur">
               <Activity className="text-cyan-400 mb-3" />
 
               <h2 className="text-white font-semibold mb-2">
@@ -95,7 +147,7 @@ const login = async () => {
               </p>
             </div>
 
-            <div className="bg-white/5 border border-cyan-500/10 rounded-2xl p-5">
+            <div className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur">
               <Cpu className="text-cyan-400 mb-3" />
 
               <h2 className="text-white font-semibold mb-2">
@@ -107,7 +159,7 @@ const login = async () => {
               </p>
             </div>
 
-            <div className="bg-white/5 border border-cyan-500/10 rounded-2xl p-5">
+            <div className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur">
               <BellRing className="text-cyan-400 mb-3" />
 
               <h2 className="text-white font-semibold mb-2">
@@ -121,15 +173,61 @@ const login = async () => {
           </div>
         </div>
 
-        {/* RIGHT */}
-        <div className="w-1/2 flex items-center justify-center bg-[#050b16] p-16">
+        <div
+          className="
+            flex
+            flex-1
+            items-center
+            justify-center
+            bg-[linear-gradient(160deg,rgba(5,11,22,0.98),rgba(10,24,49,0.92))]
+            p-5
+            sm:p-8
+            lg:p-12
+            xl:p-16
+          "
+        >
           <div className="w-full max-w-[450px]">
+
+            {errorMessage && (
+              <div className="mb-6 rounded-2xl border border-red-300/20 bg-[linear-gradient(135deg,rgba(239,68,68,0.16),rgba(15,23,42,0.72))] p-4 text-red-100 shadow-xl shadow-red-950/20">
+
+                <div className="flex items-start gap-3">
+
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-red-400/10 text-red-300">
+                    <XCircle size={22} />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+
+                    <h2 className="font-bold">
+                      Login Failed
+                    </h2>
+
+                    <p className="mt-1 text-sm text-red-100/80">
+                      {errorMessage}
+                    </p>
+
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setErrorMessage("")}
+                    className="rounded-lg px-2 text-red-100/60 transition hover:bg-white/10 hover:text-red-100"
+                  >
+                    ×
+                  </button>
+
+                </div>
+
+              </div>
+            )}
+
             <div className="mb-10">
-              <div className="w-20 h-20 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-6">
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-cyan-500/15 to-emerald-500/10 sm:h-20 sm:w-20">
                 <ShieldCheck className="text-cyan-400" size={40} />
               </div>
 
-              <h1 className="text-5xl font-bold text-white mb-3">
+              <h1 className="mb-3 text-3xl font-bold text-white sm:text-4xl xl:text-5xl">
                 Welcome Back
               </h1>
 
@@ -142,7 +240,7 @@ const login = async () => {
               <input
                 type="text"
                 placeholder="Username"
-                className="w-full h-[60px] bg-[#0d1726] border border-cyan-500/10 rounded-2xl px-5 text-white outline-none focus:border-cyan-400"
+                className="h-[58px] w-full rounded-2xl border border-white/10 bg-[#0d1726] px-5 text-white outline-none transition focus:border-cyan-400"
                 onChange={(e) =>
                   setForm({
                     ...form,
@@ -154,7 +252,7 @@ const login = async () => {
               <input
                 type="password"
                 placeholder="Password"
-                className="w-full h-[60px] bg-[#0d1726] border border-cyan-500/10 rounded-2xl px-5 text-white outline-none focus:border-cyan-400"
+                className="h-[58px] w-full rounded-2xl border border-white/10 bg-[#0d1726] px-5 text-white outline-none transition focus:border-cyan-400"
                 onChange={(e) =>
                   setForm({
                     ...form,
@@ -165,13 +263,13 @@ const login = async () => {
 
               <button
                 onClick={login}
-                className="w-full h-[60px] rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold hover:scale-[1.02] transition-all"
+                className="h-[58px] w-full rounded-2xl bg-gradient-to-r from-emerald-500 via-cyan-500 to-sky-600 font-bold text-white shadow-lg shadow-cyan-500/20 transition-all hover:translate-y-[-1px]"
               >
                 LOGIN
               </button>
             </div>
 
-            <div className="mt-10 flex justify-between text-gray-500 text-sm">
+            <div className="mt-10 flex flex-col gap-2 text-sm text-gray-500 sm:flex-row sm:justify-between">
               <span>© 2026 PLC Monitoring</span>
 
               <span className="text-green-400">
