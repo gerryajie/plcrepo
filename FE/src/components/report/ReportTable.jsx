@@ -44,9 +44,7 @@ export default function ReportTable({
               </td>
 
               <td className="p-4 text-sm font-bold text-emerald-400">
-
                 {item.username}
-
               </td>
 
               <td className="p-4 text-sm text-gray-300">

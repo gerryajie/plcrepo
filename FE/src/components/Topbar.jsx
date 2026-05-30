@@ -8,6 +8,36 @@ import {
   API_BASE_URL,
 } from "../services/api";
 
+const downloadFile = async (url, filename) => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || "Download gagal");
+    }
+
+    const blob = await res.blob();
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = downloadUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(downloadUrl);
+  } catch (error) {
+    alert(error.message || "Download gagal");
+  }
+};
+
 export default function Topbar() {
   const logout = () => {
     localStorage.removeItem("token");
@@ -16,16 +46,23 @@ export default function Topbar() {
   };
 
   const downloadExcel = () => {
-    window.open(
-      `${API_BASE_URL}/api/reports/excel`
+    downloadFile(
+      `${API_BASE_URL}/api/reports/excel`,
+      "report.xlsx"
     );
   };
 
   const downloadPDF = () => {
-    window.open(
-      `${API_BASE_URL}/api/reports/pdf`
+    downloadFile(
+      `${API_BASE_URL}/api/reports/pdf`,
+      "report.pdf"
     );
   };
+
+  const role = localStorage.getItem("role") || "operator";
+  const username =
+    localStorage.getItem("username") || "User";
+  const isAdmin = role === "admin";
 
   return (
     <div className="h-[80px] bg-[#0b1220] border-b border-cyan-500/10 flex items-center justify-between px-8">
@@ -40,13 +77,15 @@ export default function Topbar() {
       </div>
 
       <div className="flex items-center gap-4">
-        <button
-          onClick={downloadExcel}
-          className="h-[45px] px-5 rounded-2xl bg-green-500/20 border border-green-500/20 text-green-400 flex items-center gap-2 hover:scale-105 transition-all"
-        >
-          <FileDown size={18} />
-          Excel
-        </button>
+        {isAdmin && (
+          <button
+            onClick={downloadExcel}
+            className="h-[45px] px-5 rounded-2xl bg-green-500/20 border border-green-500/20 text-green-400 flex items-center gap-2 hover:scale-105 transition-all"
+          >
+            <FileDown size={18} />
+            Excel
+          </button>
+        )}
 
         <button
           onClick={downloadPDF}
@@ -70,11 +109,11 @@ export default function Topbar() {
 
           <div>
             <h2 className="text-white text-sm">
-              Admin
+              {username}
             </h2>
 
             <p className="text-gray-400 text-xs">
-              Administrator
+              {isAdmin ? "Administrator" : "Operator"}
             </p>
           </div>
         </div>

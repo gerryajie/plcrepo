@@ -23,6 +23,10 @@ export default function Sidebar() {
     localStorage.getItem("user")
   );
 
+  const role =
+    user?.role?.toLowerCase() ||
+    "operator";
+
   const logout = () => {
     localStorage.clear();
     navigate("/");
@@ -208,7 +212,7 @@ export default function Sidebar() {
           </p>
 
           <h2 className="text-xl font-bold text-green-400">
-            {user?.username || "Operator"}
+            {role === "admin" ? "Admin" : "Operator"}
           </h2>
 
         </div>

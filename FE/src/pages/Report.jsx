@@ -23,6 +23,9 @@ export default function Report() {
   const [logs, setLogs] =
     useState([]);
 
+  const [isAdmin, setIsAdmin] =
+    useState(false);
+
   const [eventFilter,
     setEventFilter] =
     useState("");
@@ -129,16 +132,18 @@ export default function Report() {
 
 
         const rows =
-
           Array.isArray(data)
-
             ? data
-
             : data.rows || [];
 
         if (isMounted) {
 
           setLogs(rows);
+
+          setIsAdmin(
+            localStorage.getItem("role") ===
+              "admin"
+          );
 
         }
 
@@ -516,6 +521,7 @@ export default function Report() {
           data={filteredLogs}
           period={period}
           dateFilter={dateFilter}
+          isAdmin={isAdmin}
         />
 
 
@@ -523,6 +529,7 @@ export default function Report() {
           currentData={
             currentData
           }
+          isAdmin={isAdmin}
         />
 
 
