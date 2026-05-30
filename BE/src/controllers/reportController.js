@@ -17,25 +17,27 @@ exports.exportExcel = async (
 
   sheet.columns = [
     {
-      header: "Temperature",
-      key: "temperature",
+      header: "Username",
+      key: "username",
     },
     {
-      header: "Pressure",
-      key: "pressure",
+      header: "Event",
+      key: "message",
     },
     {
-      header: "RPM",
-      key: "rpm",
-    },
-    {
-      header: "Output",
-      key: "output",
+      header: "Time",
+      key: "createdAt",
     },
   ];
 
   logs.forEach((log) => {
-    sheet.addRow(log.dataValues);
+    sheet.addRow({
+      username: log.username,
+      message: log.message,
+      createdAt: log.createdAt
+        ? new Date(log.createdAt).toLocaleString()
+        : null,
+    });
   });
 
   res.setHeader(
@@ -81,11 +83,9 @@ exports.exportPDF = async (
 
   logs.forEach((log, index) => {
     doc.text(
-      `${index + 1}. Temp: ${
-        log.temperature
-      } | RPM: ${log.rpm} | Output: ${
-        log.output
-      }`
+      `${index + 1}. ${log.message} | ${new Date(
+        log.createdAt
+      ).toLocaleString()}`
     );
   });
 

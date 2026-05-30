@@ -3,16 +3,29 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 exports.register = async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, role } = req.body;
+
+  const allowedRoles = ["admin", "operator"];
+
+  if (role && !allowedRoles.includes(role)) {
+    return res.status(400).json({
+      message: "Role tidak valid. Gunakan 'admin' atau 'operator'.",
+    });
+  }
 
   const hash = await bcrypt.hash(password, 10);
 
   const user = await User.create({
     username,
     password: hash,
+    role: role || "operator",
   });
 
-  res.json(user);
+  res.json({
+    id: user.id,
+    username: user.username,
+    role: user.role,
+  });
 };
 
 
@@ -51,6 +64,7 @@ exports.login = async (req, res) => {
       {
         id: user.id,
         username: user.username,
+        role: user.role,
       },
       process.env.JWT_SECRET,
       {
@@ -65,6 +79,7 @@ exports.login = async (req, res) => {
       user: {
         id: user.id,
         username: user.username,
+        role: user.role,
       },
 
     });
